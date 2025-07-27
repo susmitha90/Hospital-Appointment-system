@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #007bff;
+        }
+
+        .navbar-brand {
+            color: #fff !important;
+        }
+
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #e9ecef !important;
+        }
+
+        .navbar-nav .nav-item.active .nav-link {
+            color: #e9ecef !important;
+            font-weight: bold;
+        }
+
+        .booking-form {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .booking-form label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        .booking-form input,
+        .booking-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .booking-form button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .booking-form button:hover {
+            background-color: #0056b3;
+        }
+
+        #confirmationMessage {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #28a745;
+        }
+
+        @media (max-width: 767px) {
+            .navbar-nav {
+                text-align: center;
+            }
+
+            .navbar-nav .nav-item {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="hospital.html">Hospital</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+               
+                <li class="nav-item active"><a class="nav-link" href="bookingslot.html">Booking Slot</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Booking Form -->
+    <section class="booking-form">
+       <form  id="appointmentForm" action="https://api.web3forms.com/submit" method="POST">
+
+            <input type="hidden" name="access_key" value="d1d3fe64-0676-4136-aa8e-5691c3f395c7">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required pattern="[A-Za-z]+(\.[A-Za-z]+)*" title="Name should only contain alphabetic characters and dots.">
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="doctor">Select Doctor:</label>
+            <select id="doctor" name="doctor" required>
+                <option value="Dr. John Smith">Dr. John Smith - Cardiology</option>
+                <option value="Dr. Emily Johnson">Dr. Emily Johnson - Neurology</option>
+                <option value="Dr. Robert Brown">Dr. Robert Brown - Pediatrics</option>
+                <option value="Dr. Michael Davis">Dr. Michael Davis - Orthopedics</option>
+                <option value="Dr. Susan Wilson">Dr. Susan Wilson - Dermatology</option>
+                <option value="Dr. David Martin">Dr. David Martin - Gastroenterology</option>
+                <option value="Dr. Jessica Lee">Dr. Jessica Lee - Oncology</option>
+                <option value="Dr. James Clark">Dr. James Clark - Ophthalmology</option>
+                <option value="Dr. Karen Hernandez">Dr. Karen Hernandez - Psychiatry</option>
+                <option value="Dr. William Anderson">Dr. William Anderson - General Surgery</option>
+            </select>
+
+            <label for="appointment_date">Select Date:</label>
+            <input type="date" id="appointment_date" name="appointment_date" required>
+
+            <button type="submit">Book Slot</button>
+        </form>
+        <p id="confirmationMessage"></p>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Function to format dates as yyyy-mm-dd
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Function to get the current day's slots for a specific doctor
+        function getSlotsForDoctorAndDate(doctor, date) {
+            // Retrieve the slots for the given doctor and date from storage
+            const slotsData = JSON.parse(localStorage.getItem('doctorSlots')) || {};
+            const dateString = formatDate(date);
+            if (!slotsData[doctor]) {
+                slotsData[doctor] = {};
+            }
+            if (!slotsData[doctor][dateString]) {
+                slotsData[doctor][dateString] = Array.from({ length: 25 }, (_, i) => i + 1); // 25 slots per doctor per day
+            }
+            localStorage.setItem('doctorSlots', JSON.stringify(slotsData));
+            return slotsData[doctor][dateString];
+        }
+
+        // Set the date range for the date picker
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const maxDate = new Date(today);
+            maxDate.setDate(today.getDate() + 30); // Set max date to 30 days from today
+
+            document.getElementById('appointment_date').setAttribute('min', formatDate(today));
+            document.getElementById('appointment_date').setAttribute('max', formatDate(maxDate));
+        });
+
+        // Handle form submission
+        document.getElementById('appointmentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Collect form data
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const doctor = document.getElementById('doctor').value;
+            const date = document.getElementById('appointment_date').value;
+
+            // Get available slots for the selected doctor and date
+            const slots = getSlotsForDoctorAndDate(doctor, new Date(date));
+
+            // Check if there are available slots
+            if (slots.length > 0) {
+                // Book the first available slot
+                const slotNumber = slots.shift();
+                // Save updated slots back to storage
+                const updatedSlots = JSON.parse(localStorage.getItem('doctorSlots')) || {};
+                updatedSlots[doctor][formatDate(new Date(date))] = slots;
+                localStorage.setItem('doctorSlots', JSON.stringify(updatedSlots));
+
+                // Display confirmation message
+                const confirmationMessage = document.getElementById('confirmationMessage');
+                confirmationMessage.textContent = `Dear ${name}, your appointment with ${doctor} on ${date} has been booked. Your slot number is ${slotNumber}.`;
+
+                // Send email with Web3Forms
+                const formData = new FormData();
+                formData.append('access_key', 'd1d3fe64-0676-4136-aa8e-5691c3f395c7');
+                formData.append('name', name);
+                formData.append('email', email);
+                formData.append('doctor', doctor);
+                formData.append('date', date);
+                formData.append('slot', slotNumber);
+
+                fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    console.log(result); // You can handle success/failure response here
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+            } else {
+                // No slots available for the selected date
+                const confirmationMessage = document.getElementById('confirmationMessage');
+                confirmationMessage.textContent = `No slots available for ${date} with ${doctor}. Please select a different date or doctor.`;
+            }
+        });
+    </script>
+</body>
+</html>
